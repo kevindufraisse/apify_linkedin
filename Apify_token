@@ -1,0 +1,47 @@
+const Apify = require('apify');
+
+Apify.main(async () => {
+    // Launch the web browser.
+    const browser = await Apify.launchPuppeteer();
+
+    // Create and navigate new page
+    console.log('Open target page');
+    const page = await browser.newPage();
+
+    const email = "";
+    const password = "";
+
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.0 Safari/537.36')
+    console.log('Going to outlook')
+    await page.goto('https://outlook.live.com/people/0/?nlp=1', { timeout: 90000 })
+    
+    await page.waitFor(10000)
+    await page.type('input[type="email"]', email, { delay: 200 })
+    await page.waitFor(10000)
+    await page.click('input[type="submit"]')
+    console.log('Submits the username')
+    await page.waitFor(10000)
+    await page.type('input[type="password"]', password, { delay: 200 })
+    await page.click('input[type="submit"]')
+  
+    console.log('Submits the password. Now waiting page to load')
+   
+    await page.waitFor(30000)
+
+    const screenshot = await page.screenshot();
+    await Apify.setValue('my-key', screenshot, { contentType: 'image/png' });
+
+
+    const token = await page.evaluate(() => {
+        return sessionStorage.getItem('LokiAuthToken')
+    })
+
+    console.log(token);
+
+    // Store data in default dataset
+    await Apify.pushData({token});
+    await Apify.setValue('OUTPUT', {token});
+
+    // Close browser
+    await browser.close();
+});
